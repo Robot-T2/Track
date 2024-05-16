@@ -69,8 +69,8 @@ while True:
     distR = int(ultrasonic_sensorR.distance_mm())
     print(distL)
     print(distR)
-    if distL < 150 and distR < 150:            #Hallway function start
-        if distR < distL:
+    if distL < 150 and distR < 150:            
+        if distR < distL:                        #Hallway function start
             motor_left.duty(55)
             motor_right.duty(70)
             sleep(0.15)
