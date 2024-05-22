@@ -54,18 +54,18 @@ def move(side):
         motor_left.set_backwards()
         motor_right.duty(60)
         motor_left.duty(60)
-        sleep(0.25)
-        motor_left.set_forwards()
+        sleep(0.15)
     elif side == "R":  # Sharp right turn
         motor_right.set_backwards()
         motor_right.duty(60)
         motor_left.duty(60)
-        sleep(0.1)
-        motor_right.set_forwards()
+        sleep(0.05)
     sleep(0.1)
+    motor_left.set_forwards()
+    motor_right.set_forwards()
     motor_right.duty(0)
     motor_left.duty(0)
-    sleep(0.01)
+    sleep(0.07)
 
 
 # main line following method
@@ -73,14 +73,10 @@ def follow_line(w0, w1, w2):
     rs = w0 > 2800
     cs = w1 > 10000
     ls = w2 > 2800
-    if cs:
+    if ls:
+        move("L")
+    elif cs:
         move("l")
-    elif ls:
-        move("L")
-    elif ls and rs:
-        move("L")
-        move("L")
-        move("L")
     elif rs:
         if not cs:
             move("R")
@@ -93,18 +89,18 @@ def follow_line(w0, w1, w2):
 # wall following method
 def follow_wall(distanceL, distanceR):
     if distanceR < distanceL:
-        motor_left.duty(55)
-        motor_right.duty(70)
-    elif distanceR > distanceL:
-        motor_left.duty(70)
-        motor_right.duty(55)
-    else:
-        motor_left.duty(60)
+        motor_left.duty(30)
         motor_right.duty(60)
-    sleep(0.15)
+    elif distanceR > distanceL:
+        motor_left.duty(60)
+        motor_right.duty(30)
+    else:
+        motor_left.duty(55)
+        motor_right.duty(55)
+    sleep(0.1)
     motor_left.duty(0)
     motor_right.duty(0)
-    sleep(0.01)
+    sleep(0.05)
 
 
 # stop vehicle - to be called when vehicle is valid for parking
@@ -125,7 +121,7 @@ while True:
     # if walls detected on only L, R - vehicle follows walls
     # if walls detected on only 1 side or not detected - vehicle follows line
 
-    if distF < 200 and (distL < 150 and distR < 150):
+    if distF < 100:
         stop_vehicle()
     elif distL < 150 and distR < 150:
         follow_wall(distL, distR)
