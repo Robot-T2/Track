@@ -25,9 +25,9 @@ dire = 0
 while True:
     extra = 0
     # Storing sensor data in w0, w1, w2
-    w0 = adc_A0.read_u16() #R
-    w1 = adc_A1.read_u16() #C
-    w2 = adc_A2.read_u16() #L
+    w0 = adc_A0.read_u16()  # R
+    w1 = adc_A1.read_u16()  # C
+    w2 = adc_A2.read_u16()  # L
 
     numerator = w0 * x0 + w1 * x1 + w2 * x2
     denominator = w0 + w1 + w2
