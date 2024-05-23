@@ -1,130 +1,75 @@
+# import required files for code
+
 from motor import Motor
 from machine import Pin, ADC
 from time import sleep
-from ultrasonic import Sonic
 
-ultrasonic_sensorL = Sonic(4, 5)
-ultrasonic_sensorR = Sonic(12, 13)
+# Initialize motors
 
 motor_right = Motor("right", 9, 8, 6)
 motor_left = Motor("left", 11, 10, 7)
 motor_left.set_forwards()
 motor_right.set_forwards()
 
+
+# Distances from the centroid of the robot to the centre of each sensor in mm
+x0 = -20
+x1 = 0
+x2 = 20
+
 # Initialise pins for analog line sensors
 adc_A0 = ADC(Pin(26))
 adc_A1 = ADC(Pin(27))
 adc_A2 = ADC(Pin(28))
-val = 1
+dire = 0
 while True:
-    def move(side):                     # drive function start
-        if side == 'l':  # l
-            motor_right.duty(68)
-            motor_left.duty(0)
-            sleep(0.1)
-            motor_right.duty(0)
-            motor_left.duty(0)
-            sleep(0.01)
-        if side == 'r':  # r
-            motor_right.duty(0)
-            motor_left.duty(68)
-            sleep(0.1)
-            motor_right.duty(0)
-            motor_left.duty(0)
-            sleep(0.01)
-        if side == "L":
-            motor_left.set_backwards()
-            motor_right.duty(60)
-            motor_left.duty(60)
-            sleep(0.25)
-            motor_left.set_forwards()
-            motor_right.duty(0)
-            motor_left.duty(0)
-            sleep(0.01)
-        if side == "R":
-            motor_right.set_backwards()
-            motor_right.duty(60)
-            motor_left.duty(60)
-            sleep(0.1)
-            motor_right.set_forwards()
-            motor_right.duty(0)
-            motor_left.duty(0)
-            sleep(0.01)
-                                                 # drive function end
+    extra = 0
     # Storing sensor data in w0, w1, w2
-    w0 = adc_A0.read_u16()
-    w1 = adc_A1.read_u16()
-    w2 = adc_A2.read_u16()
-    for i in range(5):
-        w0 += adc_A0.read_u16()
-        w1 += adc_A1.read_u16()
-        w2 += adc_A2.read_u16()
-        sleep(0.01)
-    w0 = w0 / 6
-    w1 = w1 / 6
-    w2 = w2 / 6
-    ultrasonic_sensorL = Sonic(4, 5)
-    ultrasonic_sensorR = Sonic(12, 13)
-    distL = int(ultrasonic_sensorL.distance_mm())
-    distR = int(ultrasonic_sensorR.distance_mm())
-    print(distL)
-    print(distR)
-    if distL < 150 and distR < 150:            
-        if distR < distL:                        #Hallway function start
-            motor_left.duty(55)
-            motor_right.duty(70)
-            sleep(0.15)
-            motor_left.duty(0)
-            motor_right.duty(0)
-            sleep(0.01)
-        elif distR > distL:
-            motor_left.duty(70)
-            motor_right.duty(55)
-            sleep(0.15)
-            motor_left.duty(0)
-            motor_right.duty(0)
-            sleep(0.01)
-        else:
-            motor_left.duty(60)
-            motor_right.duty(60)
-        sleep(0.02)                          # Hallway function end
-    else:                                    # Line following function start
-        if w0 > 2800:     # Calibrated values for what each sensor interprets as a black line
-            rs = True
-        else:
-            rs = False
-        if w1 > 10000:
-            cs = True
-        else:
-            cs = False
-        if w2 > 2800:
-            ls = True
-        else:
-            ls = False
+    w0 = adc_A0.read_u16() #R
+    w1 = adc_A1.read_u16() #C
+    w2 = adc_A2.read_u16() #L
 
-        if cs:
-            move("l")  # make a small left turn
-        else:
-            if ls:
-                move("L")  # make a sharp left turn 
+    numerator = w0 * x0 + w1 * x1 + w2 * x2
+    denominator = w0 + w1 + w2
+    extra = 0
 
-            elif ls and rs:
-                move("L")
-                move("L")
-                move("L")   # Make sure to turn left
-            elif rs:
-                if not cs:
-                    move("R")  # make a sharp right turn
-                else:
-                    move("l")  # make a small left turn (only makes the sharp right turn when middle sensor doesnt see line)
-            else:
-                move("r")  # make a small right turn
-        sleep(0.04)
-        
-                # pseudo code for potential idea if needed
-                # line in postion 0 centre until a R or L sensor detects
-                # position is updated to -1 or 1
-                # this remains until another sensor spots the line and updates the position
-                # position data is used to update control over sensor data
-                # maybe reset whenever 0 is reached somehow and rely on sensor data for pos0 and pos data for -1/1
+    line_dist = (numerator / denominator) - 0.05  # Centre Calibration
+    if w2 > 9000:  # left sensor sees line
+        speed_L = 0
+        speed_R = 80
+        extra = 0.045
+        dire = "R"
+    elif w0 < 9000 and w1 < 10000 and w2 < 9000:  # no sensors see line
+        if dire == "L":   # Method to turn back towards the line that was lost
+            speed_L = 75
+            speed_R = 0
+        elif dire == "R":
+            speed_L = 0
+            speed_R = 75
+        else:
+            speed_L = 60
+            speed_R = 44
+    elif w0 > 9000 > w2:   # right sensor sees line and left sensor does not
+        speed_L = 75
+        speed_R = 0
+        extra = 0.04
+        dire = "L"  # dont think about it lol idk why it just works
+    else:
+        Kp = 0.009  # Proportional constant value
+        steer_value = Kp * line_dist
+        if steer_value > 0:
+            speed_L = int(0)  # Adjust as needed
+            speed_R = int(60 + steer_value * 50)  # Adjust as needed
+        else:
+            speed_L = int(60 - steer_value * 50)  # Adjust as needed
+            speed_R = int(0)  # Adjust as needed
+        if w1 > 10000:  # Centre sensor sees line
+            dire = 0
+
+    motor_right.duty(speed_R)
+    motor_left.duty(speed_L)
+    sleep(0.07 + extra)
+    motor_right.duty(0)
+    motor_left.duty(0)
+    sleep(0.19)
 
