@@ -1,0 +1,78 @@
+#Import necessary modules
+import time
+from time import sleep
+from motor import Motor
+from ultrasonic import sonic
+
+#Initialize motors
+motor_right = Motor("right", 8, 9, 6)
+motor_left = Motor("left", 10, 11, 7)
+motor_left.set_backwards()
+motor_right.set_backwards()
+
+#Pin locations for the three ultrasonic sensors
+TRIG = 3
+ECHO = 2
+ultrasonic_sensor_front = sonic(TRIG, ECHO)
+ultrasonic_sensor_right = sonic(12, 13)
+ultrasonic_sensor_left = sonic(4, 5)
+
+#Function - move forward
+def move_forward():
+    motor_left.duty(55)
+    motor_right.duty(57)
+    sleep(0.065)
+    motor_left.duty(0)
+    motor_right.duty(0)
+    sleep(0.1)
+
+#Function - Turn Left
+def turn_left():
+    motor_left.duty(0)
+    motor_right.duty(55)
+    sleep(0.15)
+    motor_left.duty(0)
+    motor_right.duty(0)
+
+#Function - to make the robot stop
+def stop_motors():
+    motor_left.duty(0)
+    motor_right.duty(0)
+    sleep(0.15)
+    motor_left.duty(0)
+    motor_right.duty(0)
+
+#Function - Turn Right
+def turn_right():
+    motor_left.duty(55)
+    motor_right.duty(0)
+    sleep(0.15)
+    motor_left.duty(0)
+    motor_right.duty(0)
+
+
+# Initialize distance variable
+dist_1 = ultrasonic_sensor_front.distance_mm()
+
+# Main loop
+while dist_1 > 20:
+    dist_1 = ultrasonic_sensor_front.distance_mm()
+    if dist_1 > 85:
+        move_forward()
+    else:
+        if dist_2 < 55:
+            turn_left()
+    time.sleep(0.001)
+    dist_2 = ultrasonic_sensor_right.distance_mm()
+    if dist_2 < 40:
+        turn_left()
+    time.sleep(0.001)
+    dist_3 = ultrasonic_sensor_left.distance_mm()
+    if dist_3 < 40:
+        turn_right()
+    time.sleep(0.001)
+
+
+# Stop motors at the end of the loop
+stop_motors()
+
