@@ -40,8 +40,6 @@ while True:
     dist_F = ultrasonic_sensor_front.distance_mm()
     dist_R = ultrasonic_sensor_right.distance_mm()
     dist_L = ultrasonic_sensor_left.distance_mm()
-    print("L =", dist_L)
-    print("R =", dist_R)
 
     numerator = w0 * x0 + w1 * x1 + w2 * x2
     denominator = w0 + w1 + w2
@@ -54,7 +52,7 @@ while True:
         sleep(2)
         # stop function end
 
-    elif 0 < dist_L < 180 and 0 < dist_R < 180:
+    elif 0 < dist_L < 180 and 0 < dist_R < 180 and w0 < 2800 and w1 < 10000 and w2 < 2800:
         # wall following begin
         Kp = 0.01  # Proportional constant value
         wall_error = min(dist_L - dist_R, 40)
@@ -74,12 +72,12 @@ while True:
         # wall following end
     else:
         # line following begin
-        if w2 > 5000:  # left sensor sees line
+        if w2 > 2800:  # left sensor sees line
             speed_L = 0
             speed_R = 80
-            extra = 0.06
+            extra = 0.02
             dire = "R"
-        elif w0 < 8000 and w1 < 10000 and w2 < 5000:  # no sensors see line
+        elif w0 < 2800 and w1 < 10000 and w2 < 2800:  # no sensors see line
             if dire == "L":  # Method to turn back towards the line that was lost
                 speed_L = 75
                 speed_R = 0
@@ -87,12 +85,12 @@ while True:
                 speed_L = 0
                 speed_R = 75
             else:
-                speed_L = 56
-                speed_R = 51
-        elif w0 > 8000 and w2 < 5000:  # right sensor sees line and left sensor does not
+                speed_L = 57
+                speed_R = 48
+        elif w0 > 3000 and w2 < 2800:  # right sensor sees line and left sensor does not
             speed_L = 75
             speed_R = 0
-            extra = 0.05
+            extra = 0.015
             dire = "L"
         else:
             Kp = 0.009  # Proportional constant value
@@ -111,4 +109,4 @@ while True:
         sleep(0.06 + extra)
         motor_right.duty(0)
         motor_left.duty(0)
-        sleep(0.16)
+        sleep(0.07)
